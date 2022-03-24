@@ -17,7 +17,7 @@ export const cryptoApi = createApi({
             query: (count) => createRequest(`/coins?limit=${count}`)
         }),
         getCryptoDetails: builder.query({
-            query: (id) => createRequest(`/coin/${id}`),
+            query: (uuid) => createRequest(`/coin/${uuid}`),
         })
     })
 });
