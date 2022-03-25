@@ -5,7 +5,9 @@ import millify from 'millify';
 import { Col, Row, Typography, Select} from 'antd';
 import { MoneyCollectOutlined, DollarCircleOutlined, FundOutlined, ExclamationCircleOutlined, StopOutlined, TrophyOutlined, CheckOutlined, NumberOutlined, ThunderboltOutlined } from '@ant-design/icons';
 
-import { useGetCryptoDetailsQuery} from '../services/cryptoApi';
+import { useGetCryptoDetailsQuery, useGetCryptoHistoryQuery} from '../services/cryptoApi';
+import LineChart from './LineChart';
+import Loader from './Loader';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -14,10 +16,9 @@ const CryptoDetails = () => {
   const { uuid } = useParams();
   const [ timePeriod, setTimePeriod ] = useState('7d');
   const { data, isFetching} = useGetCryptoDetailsQuery(uuid);
+  const { data: coinHistory } = useGetCryptoHistoryQuery({uuid, timePeriod});
   const cryptoDetails = data?.data?.coin;
-
-  console.log(cryptoDetails);
-
+  
 
   const time = ['3h', '24h', '7d', '30d', '1y', '3m', '3y', '5y'];
 
@@ -37,16 +38,18 @@ const CryptoDetails = () => {
     { title: 'Circulating Supply', value: `$ ${cryptoDetails?.supply?.circulating && millify(cryptoDetails?.supply?.circulating)}`, icon: <ExclamationCircleOutlined /> },
   ];
   
-  if(isFetching) return 'Loading...';
+  if(isFetching) return <Loader />;
+
+  // console.log(coinHistory);
  
   return (
     <Col className='coin-detail-container'>
       <Col coin-heading-details>
         <Title level={2} className="coin-name">
-          {data?.data?.coin.name}  ({data?.data?.coin.symbol}) Price
+          {cryptoDetails.name}  ({cryptoDetails.symbol}) Price
         </Title>
         <p>
-          {data?.data?.coin.name} live prices in US dollars.
+          {cryptoDetails.name} live prices in US dollars.
           View value statistics, market cap and supply.
         </p>
       </Col>
@@ -58,14 +61,15 @@ const CryptoDetails = () => {
       >
         {time.map((date) => <Option key={date}>{date}</Option>)}
       </Select>
+      <LineChart coinHistory={coinHistory} currentPrice={millify(cryptoDetails.price)} coinName={cryptoDetails.name}/>
       <Col className="stats-container">
         <Col className="coin-value-statistics">
           <Col className="coin-value-statistics-heading">
-            <Title level={3} className="coin-details-heading">{data?.data?.coin.name} Value Statistics</Title>
-            <p>An overview showing the statistics of {data?.data?.coin.name}, such as the base and quote currency, the rank, and trading volume.</p>
+            <Title level={3} className="coin-details-heading">{cryptoDetails.name} Value Statistics</Title>
+            <p>An overview showing the statistics of {cryptoDetails.name}, such as the base and quote currency, the rank, and trading volume.</p>
           </Col>
           {stats.map(({ icon, title, value }) => (
-            <Col className="coin-stats">
+            <Col className="coin-stats" key={title}>
               <Col className="coin-stats-name">
                 <Text>{icon}</Text>
                 <Text>{title}</Text>
@@ -81,7 +85,7 @@ const CryptoDetails = () => {
             <p>An overview showing the statistics of all cryptocurrencies.</p>
           </Col>
           {genericStats.map(({ icon, title, value }) => (
-            <Col className="coin-stats">
+            <Col className="coin-stats" key={title}>
               <Col className="coin-stats-name">
                 <Text>{icon}</Text>
                 <Text>{title}</Text>
